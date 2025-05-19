@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>坐标沿着圆旋转demo</title>
+    <style>
+      canvas {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border: 1px solid #ccc;
+      }
+      #coords {
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>坐标沿着圆旋转demo</h2>
+    <canvas id="canvas" width="400" height="400"></canvas>
+    <div id="coords">X2: 0, Y2: 0</div>
+
+    <script>
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      // 定义画布的圆心图像坐标 400正方形 中心是200
+      let centerX = 200,
+        centerY = 200;
+
+      // 初始向量相对原点 (0,0)
+      let X1 = 100,
+        Y1 = 0;
+
+      // 拖动相关状态
+      // 是否
+      let dragging = false;
+      // 初始角度
+      let startAngle = 0;
+      // 初始坐标
+      let initialX = X1;
+      let initialY = Y1;
+
+      function draw() {
+        // 初始化
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 圆
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 100, 0, Math.PI * 2);
+        ctx.strokeStyle = "#aaa";
+        ctx.stroke();
+
+        // 圆心
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+        ctx.fillStyle = "black";
+        ctx.fill();
+
+        // 红点
+        ctx.beginPath();
+        ctx.arc(centerX + X1, centerY - Y1, 7, 0, Math.PI * 2);
+        ctx.fillStyle = "red";
+        ctx.fill();
+
+        // 蓝线
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(centerX + X1, centerY - Y1);
+        ctx.strokeStyle = "blue";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 显示(X2,Y2)坐标值
+        document.getElementById("coords").textContent = `X2: ${X1.toFixed(
+          2
+        )}, Y2: ${Y1.toFixed(2)}`;
+      }
+
+      // 获取鼠标相对于圆心的极角
+      function getMouseAngle(e) {
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left; // 鼠标X坐标相当于画布的
+        const my = e.clientY - rect.top;
+        return Math.atan2(centerY - my, mx - centerX); //计算从圆心到鼠标的方向角
+      }
+      // 鼠标按下事件开始拖动
+      canvas.addEventListener("mousedown", (e) => {
+        const mouseX = e.clientX - canvas.getBoundingClientRect().left;
+        const mouseY = e.clientY - canvas.getBoundingClientRect().top;
+        // 计算鼠标点击点与红点的距离
+        const dx = mouseX - (centerX + X1);
+        const dy = mouseY - (centerY - Y1);
+        if (Math.hypot(dx, dy) < 10) {
+          dragging = true;
+          startAngle = getMouseAngle(e); //记录起始角度
+          initialX = X1; //记录起始位置
+          initialY = Y1;
+        }
+      });
+      // 鼠标抬起：取消拖动 改值
+      canvas.addEventListener("mouseup", () => (dragging = false));
+      // 鼠标移动事件：如果正在拖动，计算角度差并旋转点
+      canvas.addEventListener("mousemove", (e) => {
+        if (!dragging) return;
+        const currentAngle = getMouseAngle(e);
+        // 判断顺逆时针旋转
+        const delta = currentAngle - startAngle; // 计算与初始角度的差值（即旋转角度）已经有正负，所以公式为一个，不需要判断顺逆
+
+        const cos = Math.cos(delta);
+        const sin = Math.sin(delta);
+
+        // 用二维旋转公式旋转初始点-逆时针
+        X1 = initialX * cos - initialY * sin;
+        Y1 = initialX * sin + initialY * cos;
+
+        draw(); // 重绘
+      });
+
+      draw();
+    </script>
+  </body>
+</html>
